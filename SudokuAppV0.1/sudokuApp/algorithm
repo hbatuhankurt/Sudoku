@@ -1,0 +1,572 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using deneme_proje;
+
+namespace sudoku_mehmet_demirors
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+        //-----------------------GLOBAL DEĞİŞKENLER------------------------------
+        Random rast = new Random();
+        Label[] nesne = new Label[81];
+        int giris;
+        int x = 40;
+        int y = 40;
+        int ix = 0;
+        int ipucus = 6;
+        int oyunsec;
+        int saniyerekor = 0;
+        int saniye = 0;
+        int dakika = 0;
+        int saat = 0;
+        int seviye = 0;
+        bool hata = false;
+        islem data = new islem();
+        string baglan = @"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + Application.StartupPath + "/veriler.accdb";
+
+        //-----------------------------------------------------------------------------------------
+
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            yardim.Text = ipucus - 1 + "  İpucu Var";
+            comboBox1.SelectedIndex = 0;
+            sure.Text = saat + " : " + dakika + " : " + saniye;
+            contextMenuStrip1.Enabled = false;
+            //------------------x ve y ye bağlı ızgara konumu ve boyu---------------------------
+            pictureBox1.Location = new Point(x * 4 + 18, y);
+            pictureBox1.Size = new Size(4, 9 * y + 8 * 8);
+            pictureBox2.Location = new Point(x * 7 + 42, y);
+            pictureBox2.Size = new Size(4, 9 * y + 8 * 8);
+            pictureBox3.Location = new Point(x, y * 4 + 18);
+            pictureBox3.Size = new Size(9 * x + 8 * 8, 4);
+            pictureBox4.Location = new Point(x, y * 7 + 42);
+            pictureBox4.Size = new Size(9 * x + 8 * 8, 4);
+            //-----------------------------kutular oluşturuluyor------------------------------------------------------
+            for (int i = 0; i < 9; i++)
+            {
+                for (int j = 0; j < 9; j++)
+                {
+                    nesne[ix] = new Label();
+                    nesne[ix].BackColor = System.Drawing.Color.White;
+                    nesne[ix].BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+                    nesne[ix].Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+                    nesne[ix].Location = new System.Drawing.Point(x + (x * j) + (8 * j), y + (y * i) + (8 * i));
+                    nesne[ix].Name = ix.ToString();
+                    nesne[ix].Size = new System.Drawing.Size(x, y);
+                    nesne[ix].TabIndex = 0;
+                    nesne[ix].Text = "";
+                    nesne[ix].TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+                    nesne[ix].ContextMenuStrip = this.contextMenuStrip1;
+                    nesne[ix].Click += new System.EventHandler(this.label1_Click);
+                    nesne[ix].MouseMove += new System.Windows.Forms.MouseEventHandler(this.label1_MouseMove);
+                    nesne[ix].MouseLeave += new System.EventHandler(this.label1_MouseLeave);
+                    Controls.Add(nesne[ix]);
+                    ix++;
+                }
+            }
+            //------------------------------------listbox1 oyunları yükle--------------------------------------------------------------
+
+        }
+        private void button1_Click(object sender, EventArgs e)
+        {
+            kontrol.Enabled = true;
+            timer1.Enabled = false;
+            contextMenuStrip1.Enabled = false;
+            baslat.Enabled = true;
+            Verileri_sil.Enabled = true;
+            yardim.Enabled = false;
+            bitir.Enabled = false;
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void toolStripMenuItem2_Click(object sender, EventArgs e)
+        {
+            nesne[giris].Text = "1";
+        }
+
+        private void toolStripMenuItem3_Click(object sender, EventArgs e)
+        {
+            nesne[giris].Text = "2";
+        }
+
+        private void toolStripMenuItem4_Click(object sender, EventArgs e)
+        {
+            nesne[giris].Text = "3";
+        }
+
+        private void toolStripMenuItem5_Click(object sender, EventArgs e)
+        {
+            nesne[giris].Text = "4";
+        }
+
+        private void toolStripMenuItem6_Click(object sender, EventArgs e)
+        {
+            nesne[giris].Text = "5";
+        }
+
+        private void toolStripMenuItem7_Click(object sender, EventArgs e)
+        {
+            nesne[giris].Text = "6";
+        }
+
+        private void toolStripMenuItem8_Click(object sender, EventArgs e)
+        {
+            nesne[giris].Text = "7";
+        }
+
+        private void toolStripMenuItem9_Click(object sender, EventArgs e)
+        {
+            nesne[giris].Text = "8";
+        }
+
+        private void toolStripMenuItem10_Click(object sender, EventArgs e)
+        {
+            nesne[giris].Text = "9";
+        }
+
+        private void boşaltToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            nesne[giris].Text = "";
+        }
+        private void label1_MouseMove(object sender, MouseEventArgs e)
+        {
+            try
+            {
+                Label tik = (Label)sender;
+                giris = Convert.ToInt32(tik.Name.ToString());
+                tik.BackColor = Color.Orange;
+            }
+            catch { }
+        }
+
+        private void label1_MouseLeave(object sender, EventArgs e)
+        {
+            Label tik = (Label)sender;
+            tik.BackColor = Color.White;
+        }
+
+        private void kontrol_Click(object sender, EventArgs e)
+        {
+            hata = false;
+            int top = 0;
+            int a = 0;
+            //----------------------------------boş kutu kontrolü----------------------------
+            if (hata == false)
+            {
+                for (int i = 0; i < 81; i++)
+                {
+                    if (nesne[i].Text == "")
+                    {
+                        nesne[i].BackColor = Color.Red;
+                        hata = true;
+                        contextMenuStrip1.Enabled = true;
+                        kontrol.Enabled = false;
+                    }
+                }
+                if (hata == true) { MessageBox.Show("Oyunda boş kutu bırakmayınız","Boş Kutu Kontrolü"); }
+
+            }
+            //------------------------------Satır satır aynı rakam kontrolü-------------
+            if (hata == false)
+            {
+                for (int k = 0; k < 9; k++)
+                {
+                    a = k * 9;
+                    for (int i = a; i < a + 8; i++)
+                    {
+                        for (int j = i + 1; j < a + 9; j++)
+                        {
+                            if (nesne[i].Text == nesne[j].Text)
+                            {
+                                if (nesne[i].Enabled != false)
+                                {
+                                    nesne[i].BackColor = Color.Red;
+                                }
+                                else
+                                {
+                                    nesne[j].BackColor = Color.Red;
+                                }
+                                hata = true;
+                            }
+                        }
+                    }
+                }
+                a = 0;//a ile işlem bitti
+                if (hata == true)
+                {
+                    MessageBox.Show("Çözümde hata var","Tekrar Dene");
+                }
+                else
+                {
+                    //MessageBox.Show("Doğru kodlama");
+                }
+            }
+            //----------------------sütun sütun aynı rakam kontrolü-----------------------------------------------
+            if (hata == false)
+            {
+                for (int k = 0; k < 9; k++)
+                {
+                    a = k;
+                    for (int i = a; i < a + 72; i = i + 9)
+                    {
+                        for (int j = i + 9; j < a + 81 ; j = j + 9)
+                        {
+                            if (nesne[i].Text == nesne[j].Text)
+                            {
+                                if (nesne[i].Enabled != false)
+                                {
+                                    nesne[i].BackColor = Color.Red;
+                                }
+                                else
+                                {
+                                    nesne[j].BackColor = Color.Red;
+                                }
+                                hata = true;
+                            }
+                        }
+                    }
+                }
+                a = 0;//a ile işlem bitti
+                if (hata == true)
+                {
+                    MessageBox.Show("Çözümde hata var", "Tekrar Dene");
+                }
+                else
+                {
+                    //MessageBox.Show("Doğru kodlama");
+                }
+            }
+            //-----------------------her satır toplamı 45 e esit mi kontrolü------------------------------------
+            if (hata == false)
+            {
+                for (int i = 0; i < 9; i++)
+                {
+                    a = 9 * i;
+                    for (int j = a; j < a + 9; j++)
+                    {
+                        top = top + Convert.ToInt32(nesne[j].Text);
+                    }
+                    if (top != 45)
+                    {
+                        hata = true;
+                    }
+                    top = 0;
+                }
+                a = 0;// a ile işlem bitti
+                if (hata == true)
+                {
+                    MessageBox.Show("Çözümde hata var", "Tekrar Dene");
+                }
+                else
+                {
+                    //MessageBox.Show("Doğru kodlama");
+                }
+            }
+            //-----------------------her sütun toplamı 45 e esit mi kontrolü------------------------
+            if (hata == false)
+            {
+                for (int i = 0; i < 9; i++)
+                {
+                    a = i;
+                    for (int j = a; j < a + 81; j=j+9)
+                    {
+                        top = top + Convert.ToInt32(nesne[j].Text);
+                    }
+                    if (top != 45)
+                    {
+                        hata = true;
+                    }
+                    top = 0;
+                }
+                a = 0;// a ile işlem bitti
+                if (hata == true)
+                {
+                    MessageBox.Show("Çözümde hata var", "Tekrar Dene");
+                }
+                else
+                {
+                   // MessageBox.Show("Doğru kodlama");
+                }
+            }
+
+            //-----------------------fazla veya eksik rakam--------------------------------
+            if (hata == false)
+            {
+                for (int i = 1; i <= 9; i++)
+                {
+                    for (int j = 0; j < 81; j++)
+                    {
+                        if (nesne[j].Text == i.ToString())
+                        {
+                            top++;
+                        }
+                    }
+                    if (top != 9)
+                    {
+                        hata = true;
+                    }
+                    top = 0;
+                }
+                if (hata == true)
+                {
+                    MessageBox.Show("Çözümde hata var", "Tekrar Dene");
+                }
+                else
+                {
+                    //MessageBox.Show("Doğru kodlama");
+                }
+            }
+            //-------------------------------hata yok ise isim giriş kontrol--------------------------------------------------------
+            if (hata == true)
+            {
+                timer1.Enabled = true;
+                yardim.Enabled = true;
+                kontrol.Enabled = false;
+                bitir.Enabled = true;
+                contextMenuStrip1.Enabled = true;
+            }
+            if (hata == false)
+            {
+                MessageBox.Show("Doğru çözüm", "Tebrikler");
+                isminiz.Visible = true;
+                Tamam.Visible = true;
+                Iptal.Visible = true;
+                isimgiris.Visible = true;
+                kontrol.Enabled = false;
+            }
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            saniyerekor++;
+            saniye++;
+            saat = saniyerekor / 3600;
+            dakika = (saniyerekor % 3600) / 60;
+            saniye = (saniyerekor % 3600) % 60;
+            sure.Text = saat + " : " + dakika + " : " + saniye;
+        }
+
+        private void temizle_Click(object sender, EventArgs e)
+        {
+            contextMenuStrip1.Enabled = true;
+            timer1.Enabled = true;
+            kontrol.Enabled = false;
+            baslat.Enabled = false;
+            yardim.Enabled = true;
+            bitir.Enabled = true;
+            for (int i = 0; i < 81; i++)
+            {
+                if (nesne[i].Enabled==true || nesne[i].BackColor==Color.Red)
+                {
+                    nesne[i].Text = "";
+                    nesne[i].BackColor = Color.White;
+                }
+                nesne[i].ForeColor = Color.Black;
+            }
+        }
+
+        private void baslat_Click(object sender, EventArgs e)
+        {
+            baslat.Text = "Yeni Oyun";
+
+            //--------------------------isim giriş kontrol gizle----------------------
+            isminiz.Visible = false;
+            Tamam.Visible = false;
+            Iptal.Visible = false;
+            isimgiris.Visible = false;
+            //---------------------------------------------------------------------------
+
+            for (int i = 0; i < 81; i++)
+            {
+                nesne[i].Text = "";
+                nesne[i].Enabled = true;
+                nesne[i].BackColor = Color.White;
+                nesne[i].ForeColor = Color.Black;
+            }
+            saniye = 0;
+            dakika = 0;
+            saat = 0;
+            saniyerekor = 0;
+            ipucus = 6;
+            yardim.Text = ipucus - 1 + "  İpucu Var";
+            contextMenuStrip1.Enabled = true;
+            timer1.Enabled = true;
+            kontrol.Enabled = false;
+            bitir.Enabled = true;
+            oyunu_goster.Enabled = true;
+            yardim.Enabled = true;
+            yenile.Enabled = true;
+            Verileri_sil.Enabled = false;
+            //------------------------oyun yükleme işlemi------------------------------------------------
+            int oyunsay = listBox1.Items.Count;  //kaç tane oyun varsa sayısını ver
+            oyunsec = rast.Next(0, oyunsay);
+            listBox1.SelectedIndex = oyunsec;  //random oyun seçme
+            string oyun_al = listBox1.SelectedItem.ToString();
+            int kx = 0;
+            for (int i = 0; i < 9; i++)
+            {
+                if (comboBox1.SelectedIndex == 0)
+                {
+                    seviye = 30;
+                }
+                else if (comboBox1.SelectedIndex == 1)
+                {
+                    seviye = 6;
+                }
+                else if (comboBox1.SelectedIndex == 2)
+                {
+                    seviye = 5;
+                }
+                else if (comboBox1.SelectedIndex == 3)
+                {
+                    seviye = 4;
+                }
+                for (int j = 0; j < seviye; j++)
+                {
+                    int sec = rast.Next(kx, kx + 9);
+                    nesne[sec].Text = oyun_al[sec].ToString();
+                    nesne[sec].Enabled = false;
+                    nesne[sec].BackColor = Color.LightGray;
+                }
+                kx = kx + 9;
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            DialogResult cevap = MessageBox.Show("Çıkış yapmak istediğinizden emin misiniz?","Dikkat",MessageBoxButtons.YesNo);
+            if (cevap == DialogResult.Yes)
+            {
+                Dispose();
+            }
+        }
+
+        private void listBox2_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void oyunu_goster_Click(object sender, EventArgs e)
+        {
+            bitir.Enabled = false;
+            yenile.Enabled = false;
+            contextMenuStrip1.Enabled = false;
+            baslat.Enabled = true;
+            timer1.Enabled = false;
+            yardim.Enabled = false;
+            Verileri_sil.Enabled = true;
+            kontrol.Enabled = false;
+            listBox1.SelectedIndex = oyunsec; // seçilen oyunu komple yükleme
+            string oyun_al = listBox1.SelectedItem.ToString();
+            for (int i = 0; i < 81; i++)
+            {
+                if (nesne[i].Text == "")
+                {
+                    nesne[i].Text = oyun_al[i].ToString();
+                    nesne[i].BackColor = Color.White;
+                    nesne[i].ForeColor = Color.Red;
+                }
+            }
+        }
+
+        private void Tamam_Click(object sender, EventArgs e)
+        {
+            isimgiris.Visible = false;
+            isminiz.Visible = false;
+            Tamam.Visible = false;
+            Iptal.Visible = false;
+            int rekorsaat = saniyerekor / 3600;
+            int rekordakika = (saniyerekor % 3600) / 60;
+            int rekorsaniye = (saniyerekor % 3600) % 60;
+            string rekor_birlestir = rekorsaat + " : " + rekordakika + " : " + rekorsaniye;
+            string ad = isimgiris.Text;
+            string sorgu3 = "insert into oyuncular (ad,sure,rekor) values ('" + ad + "','" + saniyerekor + "','" + rekor_birlestir + "')";
+            if (data.acc_ac(sorgu3, baglan) == true)
+            {
+                if (listBox3.Items.Count != 0)
+                {
+                    listBox3.SelectedIndex = 0;
+                    if (saniyerekor < Convert.ToInt32(listBox3.SelectedItem.ToString()))
+                    {
+                        rekor.Text = rekor_birlestir;
+                        rekorisim.Text = isimgiris.Text;
+                        MessageBox.Show("Yeni rekortmen sizsiniz", "Tebrikler");
+                    }
+                }
+                else
+                {
+                    rekor.Text = rekor_birlestir;
+                    rekorisim.Text = isimgiris.Text;
+                    MessageBox.Show("İlk rekortmen sizsiniz", "Tebrikler");
+                }
+            }
+            listBox3.Items.Clear();
+            listBox2.Items.Clear();
+            isimgiris.Clear();
+            System.Threading.Thread.Sleep(1000);
+            rekorlist();
+
+        }
+
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            seviye = comboBox1.SelectedIndex;
+        }
+
+        private void yardim_Click(object sender, EventArgs e)
+        {
+            int a = 0;
+            for (int i = 0; i < 81; i++)
+            {
+                if (nesne[i].Text != "")
+                {
+                    a++;
+                }
+            }
+            if (a != 81)
+            {
+                ipucus--;
+                if (ipucus > 0)
+                {
+                    yardim.Text = ipucus - 1 + "  İpucu Var";
+                    saniyerekor = saniyerekor + 30;
+                    saniye = saniye + 30;
+                    listBox1.SelectedIndex = oyunsec; // seçilen oyuna ipucu verme yükleme
+                    string oyun_al = listBox1.SelectedItem.ToString();
+                    while (1 == 1)
+                    {
+                        int ipucu = rast.Next(0, 81);
+                        if (nesne[ipucu].Text == "")
+                        {
+                            nesne[ipucu].Enabled = false;
+                            nesne[ipucu].Text = oyun_al[ipucu].ToString();
+                            break;
+                        }
+                    }
+
+                }
+                else
+                {
+                    MessageBox.Show("Tüm hakkınızı kullandınız","İpucu Bilgisi");
+                }
+            }
+        }
+
+    }
+}
